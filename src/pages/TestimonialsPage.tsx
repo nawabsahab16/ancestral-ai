@@ -156,7 +156,7 @@ const TestimonialsPage = () => {
                 viewport={{ once: true }}
               >
                 <img 
-                  src="https://images.unsplash.com/photo-1608346128025-1896b97a6fa7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+                  src="https://images.unsplash.com/photo-1611024847487-e26177381a3f?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fHJveWFsJTIwZmFtaWx5fGVufDB8fDB8fHww" 
                   alt="Indian family" 
                   className="w-full h-80 object-cover"
                 />

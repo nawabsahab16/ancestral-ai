@@ -86,7 +86,7 @@ const FeaturesPage = () => {
                 variants={fadeIn}
               >
                 <img 
-                  src="https://images.unsplash.com/photo-1596451190630-186aff535bf2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+                  src="https://plus.unsplash.com/premium_photo-1682090845582-0e8d40f99628?q=80&w=1976&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
                   alt="Indian family generation" 
                   className="w-full h-full object-cover"
                 />
@@ -117,17 +117,17 @@ const FeaturesPage = () => {
                 {
                   title: "3-Generation Analysis",
                   description: "Upload photos from three generations of your family for the most accurate ancestral predictions.",
-                  image: "https://images.unsplash.com/photo-1598897516650-e4dc73d8e417?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2071&q=80"
+                  image: "https://media.istockphoto.com/id/1541954970/photo/happy-indian-senior-father-standing-with-his-son-and-grandson-smiling-looking-at-camera.jpg?s=612x612&w=is&k=20&c=0Jqa3jEAOwnq4zYAP6lN4iONDtcO3X6v4sBxsm5QSk8="
                 },
                 {
                   title: "Historical Context",
                   description: "Our AI integrates historical fashion and styling elements appropriate to the predicted time period.",
-                  image: "https://images.unsplash.com/photo-1576079782595-921655fb9123?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80"
+                  image: "https://images.unsplash.com/photo-1570286424693-a17f3dbf9f20?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 },
                 {
                   title: "High-Resolution Results",
                   description: "Receive detailed, high-resolution images of your predicted ancestors that can be downloaded and shared.",
-                  image: "https://images.unsplash.com/photo-1601931935821-5fbe71157695?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+                  image: "https://images.unsplash.com/photo-1543342384-1f1350e27861?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 }
               ].map((feature, index) => (
                 <motion.div key={index} variants={fadeIn}>
@@ -164,7 +164,7 @@ const FeaturesPage = () => {
                 variants={fadeIn}
               >
                 <img 
-                  src="https://images.unsplash.com/photo-1611416517780-eff3a13b0359?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2071&q=80" 
+                  src="https://plus.unsplash.com/premium_photo-1661326273214-6dc0b7d2ba2e?q=80&w=2059&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
                   alt="Indian family tree" 
                   className="w-full h-full object-cover"
                 />

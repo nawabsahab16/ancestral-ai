@@ -1,66 +1,97 @@
 import { useState, useEffect } from "react";
 import { AuthContext, User } from "./AuthContext";
 import { toast } from "sonner";
-
-const USERS_STORAGE_KEY = "auth_users";
-const CURRENT_USER_KEY = "current_user";
-
-
-const getStoredUsers = (): Record<string, User & { password: string }> => {
-  const users = localStorage.getItem(USERS_STORAGE_KEY);
-  return users ? JSON.parse(users) : {};
-};
-
-const saveUsers = (users: Record<string, User & { password: string }>) => {
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-};
-
-
-const getCurrentUser = (): User | null => {
-  const user = localStorage.getItem(CURRENT_USER_KEY);
-  return user ? JSON.parse(user) : null;
-};
-
-
-const saveCurrentUser = (user: User | null) => {
-  if (user) {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(CURRENT_USER_KEY);
-  }
-};
+import { createClient } from '@supabase/supabase-js';
+import { supabase } from "@/lib/supabase";
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedUser = getCurrentUser();
-    setUser(storedUser);
-    setIsLoading(false);
+    console.log("AuthProvider initializing...");
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event);
+        
+        if (session) {
+          console.log("Session found", session.user.id);
+          const userData: User = {
+            id: session.user.id,
+            email: session.user.email || "",
+            name: session.user.user_metadata.name || "",
+          };
+          setUser(userData);
+        } else {
+          console.log("No session");
+          setUser(null);
+        }
+        setIsLoading(false);
+      }
+    );
+
+    const initializeAuth = async () => {
+      try {
+        console.log("Getting initial session...");
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          setError(sessionError.message);
+          setIsLoading(false);
+          return;
+        }
+        
+        if (session) {
+          console.log("Initial session found", session.user.id);
+          const userData: User = {
+            id: session.user.id,
+            email: session.user.email || "",
+            name: session.user.user_metadata.name || "",
+          };
+          setUser(userData);
+        } else {
+          console.log("No initial session");
+        }
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Auth initialization error:", err);
+        setError(err instanceof Error ? err.message : "Failed to initialize authentication");
+        setIsLoading(false);
+      }
+    };
+    
+    initializeAuth();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-
-      await new Promise(resolve => setTimeout(resolve, 800));
+      console.log("Attempting login for:", email);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      const users = getStoredUsers();
-      const foundUser = Object.values(users).find(
-        u => u.email === email && u.password === password
-      );
-      
-      if (!foundUser) {
-        throw new Error("Invalid email or password");
+      if (error) {
+        console.error("Login error:", error);
+        throw new Error(error.message);
       }
-
-      const { password: _, ...cleanUser } = foundUser;
-      setUser(cleanUser);
-      saveCurrentUser(cleanUser);
       
+      if (!data.user) {
+        throw new Error("Login failed");
+      }
+      
+      console.log("Login successful");
       toast.success("Logged in successfully");
     } catch (error) {
+      console.error("Login error:", error);
       toast.error(error instanceof Error ? error.message : "Login failed");
       throw error;
     } finally {
@@ -71,26 +102,23 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signup = async (email: string, password: string, name?: string) => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name },
+        },
+      });
       
-      const users = getStoredUsers();
-
-      if (Object.values(users).some(u => u.email === email)) {
-        throw new Error("User with this email already exists");
+      if (error) {
+        throw new Error(error.message);
       }
- 
-      const id = Date.now().toString();
-      const newUser = { id, email, name, password };
       
-   
-      users[id] = newUser;
-      saveUsers(users);
-    
-      const { password: _, ...cleanUser } = newUser;
-      setUser(cleanUser);
-      saveCurrentUser(cleanUser);
+      if (!data.user) {
+        throw new Error("Signup failed");
+      }
       
-      toast.success("Account created successfully");
+      toast.success("Account created successfully. Check your email for verification.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Signup failed");
       throw error;
@@ -102,10 +130,12 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const { error } = await supabase.auth.signOut();
       
-      setUser(null);
-      saveCurrentUser(null);
+      if (error) {
+        throw new Error(error.message);
+      }
+      
       toast.success("Logged out successfully");
     } catch (error) {
       toast.error("Logout failed");
@@ -113,6 +143,20 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(false);
     }
   };
+
+  if (error && !isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md max-w-md w-full">
+          <h2 className="text-lg font-semibold mb-2">Authentication Error</h2>
+          <p>{error}</p>
+          <p className="mt-4 text-sm">
+            Please check your Supabase configuration and try refreshing the page.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
