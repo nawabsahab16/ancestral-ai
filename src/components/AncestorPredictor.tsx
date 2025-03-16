@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Download, Share2 } from "lucide-react";
+import { Download, Share2, AlertTriangle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "./auth/AuthContext";
 import { uploadImage, processAncestorPrediction } from "@/lib/supabase";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 interface AncestorPredictorProps {
   files: Record<string, File>;
@@ -20,8 +22,11 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [uploadedUrls, setUploadedUrls] = useState<Record<string, string>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [processingStage, setProcessingStage] = useState<string>("Preparing images");
+  const [usingFallbackMode, setUsingFallbackMode] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
-
+  
   useEffect(() => {
     const newPreviews: Record<string, string> = {};
     Object.entries(files).forEach(([key, file]) => {
@@ -40,14 +45,27 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
 
       try {
         setProgress(10);
-    
+        setProcessingStage("Uploading your family photos");
+        
         const uploadPromises = Object.entries(files).map(async ([generation, file]) => {
-          const url = await uploadImage(file, generation, user.id);
-          return { generation, url };
+          try {
+            console.log(`Starting upload for ${generation} image...`);
+            const url = await uploadImage(file, generation, user.id);
+            console.log(`Completed upload for ${generation}, URL:`, url.substring(0, 50) + '...');
+            if (url.startsWith('data:')) {
+              setUsingFallbackMode(true);
+            }
+            return { generation, url };
+          } catch (error) {
+            console.error(`Error uploading ${generation} image:`, error);
+            
+            throw error;
+          }
         });
 
         const uploadResults = await Promise.all(uploadPromises);
-        setProgress(40);
+        setProgress(30);
+        setProcessingStage("Analyzing facial features");
         
         const urls = uploadResults.reduce((acc, { generation, url }) => {
           acc[generation] = url;
@@ -55,20 +73,59 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
         }, {} as Record<string, string>);
         
         setUploadedUrls(urls);
-        setProgress(50);
+        setProgress(40);
+        setProcessingStage("Identifying genetic patterns");
         
+        setTimeout(() => {
+          setProgress(50);
+          setProcessingStage("Starting AI model generation");
+        }, 1000);
+        
+        setTimeout(() => {
+          setProgress(60);
+          setProcessingStage("Processing image with neural network");
+        }, 2000);
+        
+        console.log("Starting prediction with URLs:", Object.keys(urls).join(', '));
         const resultUrl = await processAncestorPrediction(urls, user.id);
-        setProgress(95);
+        console.log("Received prediction result:", resultUrl ? (resultUrl.substring(0, 50) + '...') : "null");
+        
+        if (!resultUrl || resultUrl === '/placeholder.svg') {
+          throw new Error("Prediction failed to generate a valid image");
+        }
+        
+        setProgress(90);
+        setProcessingStage("Finalizing your ancestor portrait");
         
         setResult(resultUrl);
         setProgress(100);
+        setProcessingStage("Complete!");
         setLoading(false);
         
         toast.success("Ancestor prediction complete!", {
-          description: "We've successfully generated a prediction of your ancestor using AI."
+          description: usingFallbackMode 
+            ? "Using demo mode due to storage permission issues" 
+            : "We've successfully generated a prediction of your ancestor using advanced AI."
         });
       } catch (error) {
         console.error('Error in prediction process:', error);
+        
+        if (retryCount < 2) {
+          
+          toast.warning("Retrying prediction...", {
+            description: "We encountered an issue and are trying again."
+          });
+          setRetryCount(prev => prev + 1);
+          setProgress(10);
+          setProcessingStage("Retrying prediction process");
+          
+    
+          setTimeout(() => {
+            uploadAndProcess();
+          }, 2000);
+          return;
+        }
+        
         setErrorMessage("There was an error processing your images. Please try again.");
         setLoading(false);
         toast.error("Prediction failed", {
@@ -77,10 +134,10 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
       }
     };
 
-    if (loading && Object.keys(previews).length === 3) {
+    if (loading && Object.keys(previews).length === 3 && retryCount === 0) {
       uploadAndProcess();
     }
-  }, [loading, previews, files, user]);
+  }, [loading, previews, files, user, usingFallbackMode, retryCount]);
 
   const handleDownload = () => {
     if (!result) return;
@@ -108,10 +165,17 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
         toast.success("Sharing link copied to clipboard!");
       });
     } else {
-    
       navigator.clipboard.writeText(result || "");
       toast.success("Sharing link copied to clipboard!");
     }
+  };
+
+  const handleRetry = () => {
+    setLoading(true);
+    setProgress(0);
+    setErrorMessage(null);
+    setRetryCount(0);
+    setProcessingStage("Preparing images");
   };
 
   return (
@@ -120,16 +184,20 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
         <div className="text-center py-12">
           <h2 className="text-2xl font-bold mb-4 text-red-500">Error</h2>
           <p className="text-foreground/70 mb-6">{errorMessage}</p>
-          <button
-            onClick={onReset}
-            className={cn(
-              "flex items-center justify-center px-6 py-3 rounded-full mx-auto",
-              "bg-primary text-white font-medium",
-              "hover:bg-primary/90 transition-colors"
-            )}
-          >
-            Try Again
-          </button>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Button
+              onClick={handleRetry}
+              className="bg-primary text-white font-medium hover:bg-primary/90"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+            </Button>
+            <Button
+              onClick={onReset}
+              variant="outline"
+            >
+              Upload Different Photos
+            </Button>
+          </div>
         </div>
       ) : loading ? (
         <div className="text-center py-12">
@@ -138,19 +206,30 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
           <div className="max-w-md mx-auto mb-8">
             <Progress value={progress} className="h-2 w-full" />
             <div className="flex justify-between text-sm text-muted-foreground mt-2">
-              <span>Analyzing facial features</span>
+              <span>{processingStage}</span>
               <span>{Math.round(progress)}%</span>
             </div>
           </div>
           
           <div className="text-foreground/70 space-y-3 max-w-lg mx-auto">
-            <p className="animate-pulse">Detecting hereditary traits...</p>
-            <p className="animate-pulse animate-delay-1">Identifying genetic patterns...</p>
-            <p className="animate-pulse animate-delay-2">Generating ancestor model with AI...</p>
+            <p className="animate-pulse">AI is analyzing family resemblance patterns...</p>
+            <p className="animate-pulse animate-delay-1">Examining facial structure and features...</p>
+            <p className="animate-pulse animate-delay-2">Generating historical context and appearance...</p>
           </div>
         </div>
       ) : (
         <div className="animate-fade-in">
+          {usingFallbackMode && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Demo Mode Active</AlertTitle>
+              <AlertDescription>
+                Due to storage permission issues, the app is running in demo mode. 
+                Images are stored locally and won't persist after page refresh.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <h2 className="text-2xl font-bold text-center mb-8">
             Your Ancestor Prediction Result
           </h2>

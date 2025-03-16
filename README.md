@@ -55,5 +55,3 @@ https://github.com/user-attachments/assets/74f2d57e-37ac-47af-97e5-29f288da48bf
     <li><strong>Deployment:</strong> Vercel (for hosting the frontend)</li>
     <li><strong>Version Control:</strong> GitHub</li>
 </ul>
-
-

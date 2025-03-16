@@ -85,7 +85,7 @@ const FeaturesPage = () => {
                 className="rounded-2xl overflow-hidden shadow-xl"
                 variants={fadeIn}
               >
-                <img 
+                 <img 
                   src="https://plus.unsplash.com/premium_photo-1682090845582-0e8d40f99628?q=80&w=1976&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
                   alt="Indian family generation" 
                   className="w-full h-full object-cover"
@@ -113,7 +113,7 @@ const FeaturesPage = () => {
               whileInView="visible"
               viewport={{ once: true }}
             >
-              {[
+             {[
                 {
                   title: "3-Generation Analysis",
                   description: "Upload photos from three generations of your family for the most accurate ancestral predictions.",
@@ -163,7 +163,7 @@ const FeaturesPage = () => {
                 className="rounded-2xl overflow-hidden shadow-xl"
                 variants={fadeIn}
               >
-                <img 
+                  <img 
                   src="https://plus.unsplash.com/premium_photo-1661326273214-6dc0b7d2ba2e?q=80&w=2059&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
                   alt="Indian family tree" 
                   className="w-full h-full object-cover"
@@ -176,7 +176,7 @@ const FeaturesPage = () => {
                 </p>
                 <ul className="space-y-3">
                   {[
-                    "Import data from popular genealogy platforms",
+                    "Import data from popular genealogy platforms", 
                     "Create interactive visual family trees",
                     "Add predicted ancestral images to your family records",
                     "Export high-quality images for printing and sharing"

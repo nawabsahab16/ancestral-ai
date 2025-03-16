@@ -113,7 +113,6 @@ const Navbar = () => {
         </div>
       </div>
 
-     
       {isMobileMenuOpen && (
         <div className="md:hidden bg-background border-b border-border">
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-3">

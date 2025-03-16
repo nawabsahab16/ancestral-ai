@@ -1,70 +1,54 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { corsHeaders } from "./config.ts";
+import { validateRequest, createErrorResponse } from "./validator.ts";
+import { generateAncestorImage } from "./image-generator.ts";
+import { saveAncestorPrediction } from "./database.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const { photoUrls, userId } = await validateRequest(req);
+    
+    console.log("Processing prediction request for user:", userId);
+    console.log("Received photo URLs:", Object.keys(photoUrls));
 
   
-    const { photoUrls, userId } = await req.json()
-
-
-    if (!photoUrls || !userId) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required parameters' }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      )
-    }
-
-    const requiredPhotos = ['grandfather', 'father', 'son']
-    for (const photo of requiredPhotos) {
-      if (!photoUrls[photo]) {
-        return new Response(
-          JSON.stringify({ error: `Missing ${photo} photo` }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-          }
-        )
+    for (const [key, url] of Object.entries(photoUrls)) {
+      if (url.startsWith('data:')) {
+        console.warn(`Warning: ${key} image is a data URL, not a proper storage URL`);
       }
     }
-
     
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    
-    const outputFileName = `${userId}/results/${Date.now()}.jpg`
-    
-    const resultUrl = photoUrls.grandfather
-    
-    const { error: dbError } = await supabase
-      .from('ancestor_predictions')
-      .insert({
-        user_id: userId,
-        input_photos: photoUrls,
-        result_url: resultUrl,
-        created_at: new Date().toISOString()
-      })
-    
-    if (dbError) {
-      console.error('Database error:', dbError)
+    let resultUrl;
+    try {
+      resultUrl = await generateAncestorImage(
+        photoUrls.grandfather,
+        photoUrls.father,
+        photoUrls.son
+      );
+      console.log("Successfully generated ancestor image:", resultUrl);
+    } catch (imageError) {
+      console.error("Error generating image:", imageError);
+      return createErrorResponse(
+        'Failed to generate ancestor image', 
+        imageError.message, 
+        500
+      );
     }
     
+    try {
+      await saveAncestorPrediction(userId, photoUrls, resultUrl);
+      console.log("Prediction saved to database");
+    } catch (dbError) {
+      console.error("Failed to save to database, continuing:", dbError);
+    }
+    
+
     return new Response(
       JSON.stringify({ 
         resultUrl,
@@ -74,17 +58,21 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
-    )
+    );
     
   } catch (error) {
-    console.error('Error processing prediction:', error)
+    console.error('Error processing prediction:', error);
     
-    return new Response(
-      JSON.stringify({ error: 'Failed to process ancestor prediction' }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    )
+    const isValidationError = error.message && (
+      error.message.includes("Missing") || 
+      error.message.includes("Invalid") ||
+      error.message.includes("required parameter")
+    );
+    
+    return createErrorResponse(
+      'Failed to process ancestor prediction', 
+      error.message, 
+      isValidationError ? 400 : 500
+    );
   }
-})
+});
