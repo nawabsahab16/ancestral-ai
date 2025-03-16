@@ -31,9 +31,9 @@ const UploadFlow = ({ onComplete }: UploadFlowProps) => {
         return;
       }
       
-  
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size must be less than 5MB");
+     
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size must be less than 10MB");
         return;
       }
 
@@ -55,7 +55,7 @@ const UploadFlow = ({ onComplete }: UploadFlowProps) => {
     const newFiles = { ...uploadedFiles };
     delete newFiles[generation];
     setUploadedFiles(newFiles);
-  
+    
     if (previews[generation]) {
       URL.revokeObjectURL(previews[generation]!);
       const newPreviews = { ...previews };
@@ -63,6 +63,7 @@ const UploadFlow = ({ onComplete }: UploadFlowProps) => {
       setPreviews(newPreviews);
     }
     
+
     if (fileInputRefs.current[generation]) {
       fileInputRefs.current[generation]!.value = "";
     }
