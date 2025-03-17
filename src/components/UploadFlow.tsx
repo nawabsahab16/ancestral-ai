@@ -26,12 +26,13 @@ const UploadFlow = ({ onComplete }: UploadFlowProps) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
+      // Check if file is an image
       if (!file.type.startsWith('image/')) {
         toast.error("Please upload an image file");
         return;
       }
       
-     
+      // Check file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
         toast.error("File size must be less than 10MB");
         return;
@@ -40,6 +41,7 @@ const UploadFlow = ({ onComplete }: UploadFlowProps) => {
       const newUploadedFiles = { ...uploadedFiles, [generation]: file };
       setUploadedFiles(newUploadedFiles);
       
+      // Create and set preview URL
       const previewUrl = URL.createObjectURL(file);
       setPreviews({ ...previews, [generation]: previewUrl });
       
@@ -56,6 +58,7 @@ const UploadFlow = ({ onComplete }: UploadFlowProps) => {
     delete newFiles[generation];
     setUploadedFiles(newFiles);
     
+    // Revoke object URL to prevent memory leaks
     if (previews[generation]) {
       URL.revokeObjectURL(previews[generation]!);
       const newPreviews = { ...previews };
@@ -63,7 +66,7 @@ const UploadFlow = ({ onComplete }: UploadFlowProps) => {
       setPreviews(newPreviews);
     }
     
-
+    // Reset file input
     if (fileInputRefs.current[generation]) {
       fileInputRefs.current[generation]!.value = "";
     }

@@ -13,8 +13,6 @@
 
 https://github.com/user-attachments/assets/74f2d57e-37ac-47af-97e5-29f288da48bf
 
-
-
 <h2>🛠️ <strong>Features:</strong></h2>
 
 <h3>1. User Authentication:</h3>
@@ -41,11 +39,15 @@ https://github.com/user-attachments/assets/74f2d57e-37ac-47af-97e5-29f288da48bf
 <img src="https://github.com/user-attachments/assets/c570b9eb-13fa-4691-b270-23e33f7e5ac6" alt="Results Screenshot 1">
 <img src="https://github.com/user-attachments/assets/ff4c38af-a2a8-437a-a015-b9a76ad0d5f2" alt="Results Screenshot 2">
 
+
 <h3>5. Responsive Design:</h3>
 <p><strong>Description:</strong> AncestralAI is built with a clean and minimalist UI that ensures a great user experience across all devices.</p>
 <p><strong>Screenshots:</strong></p>
-<img src="https://github.com/user-attachments/assets/93805168-5829-4876-a519-a7118988daed" alt="Responsive Design Screenshot 1">
-<img src="https://github.com/user-attachments/assets/5cfa501e-6b7b-41a4-8ded-50acae5f8e7a" alt="Responsive Design Screenshot 2">
+<img src="https://github.com/user-attachments/assets/7f4d94a7-694f-4def-8331-eb43cbc756b6" alt="Responsive Design Screenshot 1">
+<img src="https://github.com/user-attachments/assets/96502cc5-a964-4f87-9185-a7abc8db5801" alt="Responsive Design Screenshot 2">
+<img src="https://github.com/user-attachments/assets/79a7bcdc-432d-4e79-981e-447bd22705a8" alt="Responsive Design Screenshot 3">
+<img src="https://github.com/user-attachments/assets/3b50e403-0886-4d49-a01f-21c2ad0a9dc2" alt="Responsive Design Screenshot 4">
+<img src="https://github.com/user-attachments/assets/5cfa501e-6b7b-41a4-8ded-50acae5f8e7a" alt="Responsive Design Screenshot 5">
 
 <h2>🛠️ <strong>Tech Stack:</strong></h2>
 <ul>

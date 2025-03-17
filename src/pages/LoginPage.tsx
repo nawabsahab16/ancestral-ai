@@ -29,7 +29,7 @@ const LoginPage = () => {
       await login(email, password);
       navigate("/get-started");
     } catch (error) {
-      
+      // Error is handled by auth provider
     } finally {
       setIsLoading(false);
     }

@@ -1,4 +1,6 @@
 
+// Input validation functions
+
 import { corsHeaders } from './config.ts';
 
 export interface PredictionRequest {
@@ -7,15 +9,16 @@ export interface PredictionRequest {
 }
 
 export const validateRequest = async (req: Request): Promise<PredictionRequest> => {
-
+  // Get request body
   const body = await req.json();
   const { photoUrls, userId } = body;
 
-
+  // Validate input
   if (!photoUrls || !userId) {
     throw new Error('Missing required parameters');
   }
-  
+
+  // Validate all necessary photos are present
   const requiredPhotos = ['grandfather', 'father', 'son'];
   for (const photo of requiredPhotos) {
     if (!photoUrls[photo]) {

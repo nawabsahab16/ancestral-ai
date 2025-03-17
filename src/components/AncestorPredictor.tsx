@@ -26,7 +26,7 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
   const [usingFallbackMode, setUsingFallbackMode] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
-  
+  // Generate preview images from uploaded files
   useEffect(() => {
     const newPreviews: Record<string, string> = {};
     Object.entries(files).forEach(([key, file]) => {
@@ -35,6 +35,7 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
     setPreviews(newPreviews);
   }, [files]);
 
+  // Main processing function
   useEffect(() => {
     const uploadAndProcess = async () => {
       if (!user) {
@@ -47,6 +48,7 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
         setProgress(10);
         setProcessingStage("Uploading your family photos");
         
+        // Upload all images in parallel
         const uploadPromises = Object.entries(files).map(async ([generation, file]) => {
           try {
             console.log(`Starting upload for ${generation} image...`);
@@ -58,7 +60,7 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
             return { generation, url };
           } catch (error) {
             console.error(`Error uploading ${generation} image:`, error);
-            
+            // Re-throw to be caught by the outer try/catch
             throw error;
           }
         });
@@ -111,15 +113,15 @@ const AncestorPredictor = ({ files, onReset }: AncestorPredictorProps) => {
         console.error('Error in prediction process:', error);
         
         if (retryCount < 2) {
-          
+          // Automatic retry for transient errors
           toast.warning("Retrying prediction...", {
             description: "We encountered an issue and are trying again."
           });
           setRetryCount(prev => prev + 1);
-          setProgress(10);
+          setProgress(10); // Reset progress
           setProcessingStage("Retrying prediction process");
           
-    
+          // Wait a moment before retrying
           setTimeout(() => {
             uploadAndProcess();
           }, 2000);

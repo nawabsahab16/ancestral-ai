@@ -19,7 +19,7 @@ export const supabase = createClient(
 
 export const uploadImage = async (file: File, folder: string, userId: string) => {
   try {
-    
+
     if (file.size > 10 * 1024 * 1024) {
       throw new Error(`${folder} image exceeds 10MB size limit`);
     }
@@ -39,7 +39,7 @@ export const uploadImage = async (file: File, folder: string, userId: string) =>
     if (error) {
       console.error(`Error uploading ${folder} image:`, error);
       
-
+      // Check if it's an RLS policy error
       if (error.message?.includes('row-level security policy')) {
         throw new Error(
           `Storage permission denied. Please ensure your Supabase project has the correct RLS policies configured.`
@@ -49,7 +49,7 @@ export const uploadImage = async (file: File, folder: string, userId: string) =>
       throw error;
     }
     
-
+    // Get public URL
     const { data: urlData } = supabase.storage
       .from('ancestor-photos')
       .getPublicUrl(fileName);
@@ -59,6 +59,8 @@ export const uploadImage = async (file: File, folder: string, userId: string) =>
   } catch (error) {
     console.error(`Failed to upload ${folder} image:`, error);
     
+    // If we have RLS policy errors, use localStorage as fallback for demo purposes
+    // This is temporary until Supabase permissions are properly configured
     const fallbackUrl = await storeImageLocally(file, folder);
     
     toast.error(`Using local storage for ${folder} image as fallback`, {
@@ -75,13 +77,14 @@ const storeImageLocally = async (file: File, folder: string): Promise<string> =>
     const reader = new FileReader();
     reader.onloadend = () => {
       try {
-       
+    
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
+  
           let width = img.width;
           let height = img.height;
-          const maxDimension = 600; 
+          const maxDimension = 600;
           
           if (width > height && width > maxDimension) {
             height = (height / width) * maxDimension;
@@ -96,8 +99,7 @@ const storeImageLocally = async (file: File, folder: string): Promise<string> =>
           
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          
-         
+        
           const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5); 
           
          
@@ -106,7 +108,7 @@ const storeImageLocally = async (file: File, folder: string): Promise<string> =>
             resolve(compressedDataUrl);
           } catch (storageError) {
             console.error('localStorage quota exceeded:', storageError);
-          
+            
             const furtherCompressedDataUrl = canvas.toDataURL('image/jpeg', 0.3);
             resolve(furtherCompressedDataUrl);
           }
@@ -114,7 +116,7 @@ const storeImageLocally = async (file: File, folder: string): Promise<string> =>
         img.src = reader.result as string;
       } catch (error) {
         console.error('Error compressing image:', error);
-    
+        
         toast.error('Failed to store image locally', {
           description: 'Using placeholder image instead'
         });
@@ -128,11 +130,11 @@ const storeImageLocally = async (file: File, folder: string): Promise<string> =>
 export const processAncestorPrediction = async (photoUrls: Record<string, string>, userId: string) => {
   try {
     console.log('Starting ancestor prediction process with photos:', Object.keys(photoUrls).join(', '));
-     
+    
+   
     const usingFallbackStorage = Object.values(photoUrls).some(url => url.startsWith('data:'));
     
     if (usingFallbackStorage) {
-    
       console.log('Using fallback mode for prediction');
       toast.warning('Using demo mode for ancestor prediction', {
         description: 'This is a simulated result. Connect to Supabase properly for full functionality.'
@@ -140,7 +142,6 @@ export const processAncestorPrediction = async (photoUrls: Record<string, string
       
       await new Promise(resolve => setTimeout(resolve, 5000));
       
-  
       try {
         const blendedImage = await blendImagesLocally(photoUrls);
         return blendedImage;
@@ -149,7 +150,7 @@ export const processAncestorPrediction = async (photoUrls: Record<string, string
         return '/placeholder.svg';
       }
     }
-     
+    
     const { data, error } = await supabase.functions.invoke('predict-ancestor', {
       body: { 
         photoUrls, 
@@ -159,15 +160,16 @@ export const processAncestorPrediction = async (photoUrls: Record<string, string
     
     if (error) {
       console.error('Edge function error:', error);
-  
+      
       toast.warning('Edge function unavailable, using local processing instead', { 
         description: 'Results may be less accurate in demo mode'
       });
       
+  
       await new Promise(resolve => setTimeout(resolve, 3000));
       
       try {
-    
+      
         const blendedImage = await blendImagesLocally(photoUrls);
         return blendedImage;
       } catch (blendError) {
@@ -190,7 +192,6 @@ export const processAncestorPrediction = async (photoUrls: Record<string, string
       description: "Using a placeholder image as fallback"
     });
     
-
     try {
       const blendedImage = await blendImagesLocally(photoUrls);
       return blendedImage;
@@ -203,7 +204,6 @@ export const processAncestorPrediction = async (photoUrls: Record<string, string
 
 const blendImagesLocally = async (photoUrls: Record<string, string>): Promise<string> => {
   return new Promise((resolve, reject) => {
-
     const images: HTMLImageElement[] = [];
     let loadedCount = 0;
     
@@ -217,7 +217,6 @@ const blendImagesLocally = async (photoUrls: Record<string, string>): Promise<st
       return;
     }
     
-   
     Object.values(photoUrls).forEach((url, index) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -225,10 +224,9 @@ const blendImagesLocally = async (photoUrls: Record<string, string>): Promise<st
         images.push(img);
         loadedCount++;
         
-
         if (loadedCount === Object.keys(photoUrls).length) {
           try {
-          
+            // Fill background
             ctx.fillStyle = '#f8f8f8';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
@@ -238,12 +236,12 @@ const blendImagesLocally = async (photoUrls: Record<string, string>): Promise<st
               ctx.drawImage(images[0], 0, 0, canvas.width, canvas.height);
             }
             
-    
             if (images[1]) {
               ctx.globalAlpha = 0.3;
               ctx.drawImage(images[1], 0, 0, canvas.width, canvas.height);
             }
             
+            // Son (third image with least influence)
             if (images[2]) {
               ctx.globalAlpha = 0.1;
               ctx.drawImage(images[2], 0, 0, canvas.width, canvas.height);
@@ -252,7 +250,8 @@ const blendImagesLocally = async (photoUrls: Record<string, string>): Promise<st
             ctx.globalAlpha = 0.2;
             ctx.fillStyle = '#8b4513';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
+            
+
             ctx.globalAlpha = 0.1;
             for (let i = 0; i < 5000; i++) {
               const x = Math.random() * canvas.width;
@@ -262,7 +261,7 @@ const blendImagesLocally = async (photoUrls: Record<string, string>): Promise<st
               ctx.fillRect(x, y, 1, 1);
             }
             
-            
+           
             ctx.globalAlpha = 1.0;
             
             const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
@@ -283,7 +282,7 @@ const blendImagesLocally = async (photoUrls: Record<string, string>): Promise<st
       };
       img.src = url;
     });
-  
+    
     setTimeout(() => {
       if (loadedCount < Object.keys(photoUrls).length) {
         reject(new Error("Timed out waiting for images to load"));
